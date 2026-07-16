@@ -31,10 +31,54 @@ TABLE_HEADERS = [
 CATEGORY_ICONS = [
     "\U0001f3f7\ufe0f",
     "\U0001f359",
+    "\U0001f35c",
+    "\U0001f37d\ufe0f",
+    "\U0001f375",
     "\U0001f9f4",
+    "\U0001f9fb",
+    "\U0001f48a",
     "\U0001f683",
+    "\U0001f697",
+    "\U0001f6b2",
     "\U0001f6d2",
+    "\U0001f3e0",
+    "\U0001f4a1",
+    "\U0001f4f1",
+    "\U0001f4da",
+    "\U0001f3ac",
+    "\U0001f3ae",
+    "\U0001f381",
+    "\U0001f4b0",
+    "\U0001f4b3",
+    "\U0001f4bc",
+    "\U0001f4c8",
 ]
+
+ICON_LABELS = {
+    "\U0001f3f7\ufe0f": "\U0001f3f7\ufe0f \u305d\u306e\u4ed6",
+    "\U0001f359": "\U0001f359 \u98df\u8cbb",
+    "\U0001f35c": "\U0001f35c \u5916\u98df",
+    "\U0001f37d\ufe0f": "\U0001f37d\ufe0f \u98df\u4e8b",
+    "\U0001f375": "\U0001f375 \u30ab\u30d5\u30a7",
+    "\U0001f9f4": "\U0001f9f4 \u65e5\u7528\u54c1",
+    "\U0001f9fb": "\U0001f9fb \u7f8e\u5bb9\u30fb\u885b\u751f",
+    "\U0001f48a": "\U0001f48a \u533b\u7642",
+    "\U0001f683": "\U0001f683 \u96fb\u8eca",
+    "\U0001f697": "\U0001f697 \u8eca",
+    "\U0001f6b2": "\U0001f6b2 \u81ea\u8ee2\u8eca",
+    "\U0001f6d2": "\U0001f6d2 \u30b9\u30fc\u30d1\u30fc",
+    "\U0001f3e0": "\U0001f3e0 \u4f4f\u5c45",
+    "\U0001f4a1": "\U0001f4a1 \u5149\u71b1\u8cbb",
+    "\U0001f4f1": "\U0001f4f1 \u901a\u4fe1",
+    "\U0001f4da": "\U0001f4da \u5b66\u7fd2",
+    "\U0001f3ac": "\U0001f3ac \u6620\u753b",
+    "\U0001f3ae": "\U0001f3ae \u5a2f\u697d",
+    "\U0001f381": "\U0001f381 \u30ae\u30d5\u30c8",
+    "\U0001f4b0": "\U0001f4b0 \u8caf\u91d1",
+    "\U0001f4b3": "\U0001f4b3 \u30ab\u30fc\u30c9",
+    "\U0001f4bc": "\U0001f4bc \u4ed5\u4e8b",
+    "\U0001f4c8": "\U0001f4c8 \u6295\u8cc7",
+}
 
 
 class GoogleSheetsConfigError(RuntimeError):
@@ -244,7 +288,11 @@ def render_category_picker() -> str:
                 st.rerun()
 
     with st.expander("\u30ab\u30c6\u30b4\u30ea\u30fc\u3092\u8ffd\u52a0"):
-        icon = st.selectbox("\u30a2\u30a4\u30b3\u30f3", CATEGORY_ICONS)
+        icon = st.selectbox(
+            "\u30a2\u30a4\u30b3\u30f3",
+            CATEGORY_ICONS,
+            format_func=lambda value: ICON_LABELS.get(value, value),
+        )
         new_category = st.text_input("\u30ab\u30c6\u30b4\u30ea\u30fc\u540d", placeholder="\u4f8b: \u533b\u7642\u8cbb")
         if st.button("\u8ffd\u52a0", use_container_width=True):
             cleaned_category = new_category.strip()
@@ -286,17 +334,33 @@ def render_summary_section() -> None:
 
     today = date.today()
     default_start = today.replace(day=1)
+    period_mode = st.radio(
+        "\u671f\u9593\u306e\u6307\u5b9a\u65b9\u6cd5",
+        ["\u30c9\u30e9\u30e0\u30ed\u30fc\u30eb", "\u30b9\u30e9\u30a4\u30c0\u30fc"],
+        horizontal=True,
+        key="summary_period_mode",
+    )
 
-    start_date = render_date_picker(
-        "\u958b\u59cb\u65e5",
-        "summary_start",
-        default_start,
-    )
-    end_date = render_date_picker(
-        "\u7d42\u4e86\u65e5",
-        "summary_end",
-        today,
-    )
+    if period_mode == "\u30b9\u30e9\u30a4\u30c0\u30fc":
+        start_date, end_date = st.slider(
+            "\u96c6\u8a08\u671f\u9593",
+            min_value=date(today.year - 5, 1, 1),
+            max_value=today,
+            value=(default_start, today),
+            format="YYYY-MM-DD",
+            key="summary_date_slider",
+        )
+    else:
+        start_date = render_date_picker(
+            "\u958b\u59cb\u65e5",
+            "summary_start",
+            default_start,
+        )
+        end_date = render_date_picker(
+            "\u7d42\u4e86\u65e5",
+            "summary_end",
+            today,
+        )
 
     if start_date > end_date:
         st.error("\u958b\u59cb\u65e5\u306f\u7d42\u4e86\u65e5\u3088\u308a\u524d\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002")
