@@ -425,6 +425,27 @@ def render_summary_section() -> None:
         st.info("\u6307\u5b9a\u671f\u9593\u306e\u8a18\u9332\u304c\u3042\u308a\u307e\u305b\u3093\u3002")
         return
 
+    keyword_text = st.text_input(
+        "\u30ad\u30fc\u30ef\u30fc\u30c9\u3067\u7d5e\u308a\u8fbc\u307f",
+        placeholder="\u4f8b: \u30b7\u30fc\u30eb \u65e5\u7528\u54c1",
+        key="summary_keyword_filter",
+    ).strip()
+    if keyword_text:
+        keywords = [keyword.casefold() for keyword in keyword_text.split() if keyword.strip()]
+        searchable_text = (
+            period_expenses["\u5185\u5bb9"].astype(str)
+            + " "
+            + period_expenses["\u30ab\u30c6\u30b4\u30ea\u30fc"].astype(str)
+        ).str.casefold()
+        keyword_mask = searchable_text.apply(
+            lambda value: all(keyword in value for keyword in keywords)
+        )
+        period_expenses = period_expenses[keyword_mask]
+
+    if period_expenses.empty:
+        st.info("\u30ad\u30fc\u30ef\u30fc\u30c9\u306b\u4e00\u81f4\u3059\u308b\u8a18\u9332\u304c\u3042\u308a\u307e\u305b\u3093\u3002")
+        return
+
     summary = (
         period_expenses.groupby("\u30ab\u30c6\u30b4\u30ea\u30fc", as_index=False)["\u91d1\u984d"]
         .sum()
