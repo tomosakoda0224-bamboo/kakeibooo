@@ -21,6 +21,13 @@ DEFAULT_CATEGORIES = {
     CAT_SUPER: "\U0001f6d2",
 }
 
+DEFAULT_CATEGORY_COLORS = {
+    CAT_FOOD: "#F59E0B",
+    CAT_DAILY: "#10B981",
+    CAT_TRANSIT: "#3B82F6",
+    CAT_SUPER: "#8B5CF6",
+}
+
 TABLE_HEADERS = [
     "\u65e5\u4ed8",
     "\u5185\u5bb9",
@@ -90,6 +97,8 @@ def initialize_state() -> None:
         st.session_state.categories = DEFAULT_CATEGORIES.copy()
     if "selected_category" not in st.session_state:
         st.session_state.selected_category = CAT_FOOD
+    if "category_colors" not in st.session_state:
+        st.session_state.category_colors = DEFAULT_CATEGORY_COLORS.copy()
 
 
 def get_secret_section(name: str) -> Any:
@@ -302,8 +311,31 @@ def render_category_picker() -> str:
                 st.warning("\u540c\u3058\u30ab\u30c6\u30b4\u30ea\u30fc\u304c\u3059\u3067\u306b\u3042\u308a\u307e\u3059\u3002")
             else:
                 st.session_state.categories[cleaned_category] = icon
+                st.session_state.category_colors.setdefault(cleaned_category, "#64748B")
                 st.session_state.selected_category = cleaned_category
                 st.success(f"{cleaned_category}\u3092\u8ffd\u52a0\u3057\u307e\u3057\u305f\u3002")
+                st.rerun()
+
+    custom_categories = [
+        category_name
+        for category_name in st.session_state.categories
+        if category_name not in DEFAULT_CATEGORIES
+    ]
+    with st.expander("\u8ffd\u52a0\u3057\u305f\u30ab\u30c6\u30b4\u30ea\u30fc\u3092\u524a\u9664"):
+        if not custom_categories:
+            st.caption("\u524a\u9664\u3067\u304d\u308b\u8ffd\u52a0\u30ab\u30c6\u30b4\u30ea\u30fc\u306f\u307e\u3060\u3042\u308a\u307e\u305b\u3093\u3002")
+        else:
+            delete_category = st.selectbox(
+                "\u524a\u9664\u3059\u308b\u30ab\u30c6\u30b4\u30ea\u30fc",
+                custom_categories,
+                key="delete_category",
+            )
+            if st.button("\u30ab\u30c6\u30b4\u30ea\u30fc\u3092\u524a\u9664", use_container_width=True):
+                st.session_state.categories.pop(delete_category, None)
+                st.session_state.category_colors.pop(delete_category, None)
+                if st.session_state.selected_category == delete_category:
+                    st.session_state.selected_category = CAT_FOOD
+                st.success(f"{delete_category}\u3092\u524a\u9664\u3057\u307e\u3057\u305f\u3002")
                 st.rerun()
 
     return st.session_state.selected_category
@@ -404,12 +436,33 @@ def render_summary_section() -> None:
     display_summary["\u91d1\u984d"] = display_summary["\u91d1\u984d"].map(lambda value: f"{int(value):,}\u5186")
     st.dataframe(display_summary, use_container_width=True, hide_index=True)
 
+    with st.expander("\u5186\u30b0\u30e9\u30d5\u306e\u8272\u3092\u5909\u66f4"):
+        color_columns = st.columns(3)
+        for index, category_name in enumerate(summary["\u30ab\u30c6\u30b4\u30ea\u30fc"].tolist()):
+            current_color = st.session_state.category_colors.get(category_name, "#64748B")
+            with color_columns[index % 3]:
+                st.session_state.category_colors[category_name] = st.color_picker(
+                    category_name,
+                    current_color,
+                    key=f"summary_color_{category_name}",
+                )
+
+    color_domain = summary["\u30ab\u30c6\u30b4\u30ea\u30fc"].tolist()
+    color_range = [
+        st.session_state.category_colors.get(category_name, "#64748B")
+        for category_name in color_domain
+    ]
+
     chart = (
         alt.Chart(summary)
         .mark_arc(innerRadius=45)
         .encode(
             theta=alt.Theta(field="\u91d1\u984d", type="quantitative"),
-            color=alt.Color(field="\u30ab\u30c6\u30b4\u30ea\u30fc", type="nominal"),
+            color=alt.Color(
+                field="\u30ab\u30c6\u30b4\u30ea\u30fc",
+                type="nominal",
+                scale=alt.Scale(domain=color_domain, range=color_range),
+            ),
             tooltip=[
                 alt.Tooltip("\u30ab\u30c6\u30b4\u30ea\u30fc:N", title="\u30ab\u30c6\u30b4\u30ea\u30fc"),
                 alt.Tooltip("\u91d1\u984d:Q", title="\u91d1\u984d", format=","),
@@ -418,6 +471,12 @@ def render_summary_section() -> None:
         .properties(height=360)
     )
     st.altair_chart(chart, use_container_width=True)
+
+    st.markdown("#### \u8a72\u5f53\u671f\u9593\u306e\u30ec\u30b3\u30fc\u30c9")
+    display_records = period_expenses.sort_values("\u65e5\u4ed8", ascending=False).copy()
+    display_records["\u65e5\u4ed8"] = display_records["\u65e5\u4ed8"].map(lambda value: value.isoformat())
+    display_records["\u91d1\u984d"] = display_records["\u91d1\u984d"].map(lambda value: f"{int(value):,}\u5186")
+    st.dataframe(display_records, use_container_width=True, hide_index=True)
 
 
 def main() -> None:
