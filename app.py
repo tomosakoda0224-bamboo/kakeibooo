@@ -101,6 +101,8 @@ def initialize_state() -> None:
     if "category_colors" not in st.session_state:
         st.session_state.category_colors = DEFAULT_CATEGORY_COLORS.copy()
     st.session_state.category_colors.update(DEFAULT_CATEGORY_COLORS)
+    if "summary_has_run" not in st.session_state:
+        st.session_state.summary_has_run = False
 
 
 def get_secret_section(name: str) -> Any:
@@ -368,11 +370,16 @@ def render_summary_section() -> None:
 
     today = date.today()
     default_start = today.replace(day=1)
+
+    def reset_summary_results() -> None:
+        st.session_state.summary_has_run = False
+
     period_mode = st.radio(
         "\u671f\u9593\u306e\u6307\u5b9a\u65b9\u6cd5",
         ["\u30c9\u30e9\u30e0\u30ed\u30fc\u30eb", "\u30b9\u30e9\u30a4\u30c0\u30fc"],
         horizontal=True,
         key="summary_period_mode",
+        on_change=reset_summary_results,
     )
 
     if period_mode == "\u30b9\u30e9\u30a4\u30c0\u30fc":
@@ -400,7 +407,10 @@ def render_summary_section() -> None:
         st.error("\u958b\u59cb\u65e5\u306f\u7d42\u4e86\u65e5\u3088\u308a\u524d\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002")
         return
 
-    if not st.button("\u3053\u306e\u671f\u9593\u3067\u96c6\u8a08", use_container_width=True):
+    if st.button("\u3053\u306e\u671f\u9593\u3067\u96c6\u8a08", use_container_width=True):
+        st.session_state.summary_has_run = True
+
+    if not st.session_state.summary_has_run:
         return
 
     try:
