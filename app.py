@@ -22,10 +22,11 @@ DEFAULT_CATEGORIES = {
 }
 
 DEFAULT_CATEGORY_COLORS = {
-    CAT_FOOD: "#F59E0B",
-    CAT_DAILY: "#10B981",
-    CAT_TRANSIT: "#3B82F6",
-    CAT_SUPER: "#8B5CF6",
+    CAT_FOOD: "#ffb97c",
+    CAT_TRANSIT: "#eb7979",
+    CAT_DAILY: "#6be080",
+    CAT_SUPER: "#bfe1f6",
+    "\u5a2f\u697d": "#ffe5a0",
 }
 
 TABLE_HEADERS = [
@@ -99,6 +100,7 @@ def initialize_state() -> None:
         st.session_state.selected_category = CAT_FOOD
     if "category_colors" not in st.session_state:
         st.session_state.category_colors = DEFAULT_CATEGORY_COLORS.copy()
+    st.session_state.category_colors.update(DEFAULT_CATEGORY_COLORS)
 
 
 def get_secret_section(name: str) -> Any:
@@ -441,11 +443,20 @@ def render_summary_section() -> None:
         for index, category_name in enumerate(summary["\u30ab\u30c6\u30b4\u30ea\u30fc"].tolist()):
             current_color = st.session_state.category_colors.get(category_name, "#64748B")
             with color_columns[index % 3]:
-                st.session_state.category_colors[category_name] = st.color_picker(
-                    category_name,
-                    current_color,
-                    key=f"summary_color_{category_name}",
-                )
+                if category_name in DEFAULT_CATEGORY_COLORS:
+                    st.session_state.category_colors[category_name] = DEFAULT_CATEGORY_COLORS[category_name]
+                    st.color_picker(
+                        category_name,
+                        DEFAULT_CATEGORY_COLORS[category_name],
+                        key=f"summary_color_{category_name}",
+                        disabled=True,
+                    )
+                else:
+                    st.session_state.category_colors[category_name] = st.color_picker(
+                        category_name,
+                        current_color,
+                        key=f"summary_color_{category_name}",
+                    )
 
     color_domain = summary["\u30ab\u30c6\u30b4\u30ea\u30fc"].tolist()
     color_range = [
