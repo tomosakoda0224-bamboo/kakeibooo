@@ -626,3 +626,112 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+with report_tab:
+    if "period_offset" not in st.session_state:
+        st.session_state.period_offset = 0
+
+    current_start, _ = period_for(date.today())
+    start, end = shift_period(
+        current_start,
+        st.session_state.period_offset,
+    )
+
+    previous, title, following = st.columns([1, 4, 1])
+
+    with previous:
+        if st.button(
+            "← 前期間",
+            key="period-nav-prev",
+            use_container_width=True,
+        ):
+            st.session_state.period_offset -= 1
+            st.rerun()
+
+    with title:
+        st.markdown(
+            f"<h3 style='text-align:center;margin:.35rem 0'>"
+            f"{end.year}年{end.month}月</h3>",
+            unsafe_allow_html=True,
+        )
+
+    with following:
+        if st.button(
+            "次期間 →",
+            key="period-nav-next",
+            use_container_width=True,
+        ):
+            st.session_state.period_offset += 1
+            st.rerun()
+
+    expenses = load_expenses(expense_sheet, start, end)
+    total = int(expenses["金額"].sum()) if not expenses.empty else 0
+    days_used = (
+        int(expenses["日付"].nunique()) if not expenses.empty else 0
+    )
+
+    metric1, metric2, metric3 = st.columns(3)
+    metric1.metric("期間の合計金額", money(total))
+    metric2.metric("支出があった日", f"{days_used} 日")
+    metric3.metric(
+        "使用日の平均",
+        money(round(total / days_used) if days_used else 0),
+    )
+
+    st.subheader("日ごとの使用金額")
+    st.caption(
+        "今日以前の500円以下・支出なしの日は薄緑、"
+        "501円以上の日は薄赤で表示します。"
+        "緑の枠は今日を表します。"
+    )
+    daily = (
+        expenses.groupby("日付")["金額"].sum().to_dict()
+        if not expenses.empty
+        else {}
+    )
+    render_calendar(start, end, daily)
+
+    if expenses.empty:
+        st.info("この期間の支出はまだありません。")
+    else:
+        st.subheader("支出一覧")
+
+        for _, row in expenses.iterrows():
+            record_id = str(row["record_id"])
+
+            with st.container(key=f"expense-row-{record_id}"):
+                left, middle, right = st.columns([3, 2, 1])
+                icon = categories.get(row["カテゴリー"], "🏷️")
+
+                with left:
+                    st.markdown(
+                        f"**{html.escape(str(row['購入品']))}**  \n"
+                        f"<span class='category-chip'>"
+                        f"{icon} "
+                        f"{html.escape(str(row['カテゴリー']))}"
+                        f"</span>",
+                        unsafe_allow_html=True,
+                    )
+
+                with middle:
+                    st.markdown(
+                        f"**{money(row['金額'])}**  \n"
+                        f"{row['日付']}"
+                    )
+
+                with right:
+                    if st.button(
+                        "🗑️",
+                        key=f"delete_{record_id}",
+                        help="この支出を削除",
+                    ):
+                        if delete_expense(
+                            expense_sheet,
+                            record_id,
+                        ):
+                            st.rerun()
+                        else:
+                            st.warning(
+                                "対象の記録が見つかりませんでした。"
+                            )
