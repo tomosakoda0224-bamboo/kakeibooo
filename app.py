@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import calendar
+import html
+import uuid
 from datetime import date, timedelta
 from typing import Any
 
 import altair as alt
 import pandas as pd
 import streamlit as st
-import html
 
 
 CAT_FOOD = "\u98df\u8cbb"
@@ -30,7 +31,7 @@ DEFAULT_CATEGORY_COLORS = {
     "\u5a2f\u697d": "#ffe5a0",
 }
 
-EXPENSE_HEADERS = ["日付", "内容", "金額", "カテゴリー"]
+EXPENSE_HEADERS = ["record_id", "日付", "内容", "金額", "カテゴリー"]
 
 CATEGORY_ICONS = [
     "\U0001f3f7\ufe0f",
@@ -201,17 +202,28 @@ def get_google_sheet() -> Any:
 
 def save_to_google_sheet(entry_date: date, item: str, amount: str, category: str) -> None:
     worksheet = get_google_sheet()
-    existing_headers = worksheet.row_values(1)[:4]
+    existing_headers = worksheet.row_values(1)[:5]
+
     if not any(existing_headers):
-        worksheet.update("A1:D1", [EXPENSE_HEADERS])
+        worksheet.update(
+            range_name="A1:E1",
+            values=[EXPENSE_HEADERS],
+        )
+    elif existing_headers != EXPENSE_HEADERS:
+        raise GoogleSheetsConfigError(
+            "スプレッドシートの1行目を「record_id、日付、内容、金額、カテゴリー」"
+            "の順にしてください。既存の4列シートを移行する場合は、先頭に列を追加して"
+            "A1へ record_id を設定し、既存行のA列には重複しないUUIDを設定してください。"
+        )
 
-    existing_rows = worksheet.get("A2:D")
-    used_row_count = sum(1 for row in existing_rows if any(str(cell).strip() for cell in row))
-    next_row = used_row_count + 2
-
-    worksheet.update(
-        f"A{next_row}:D{next_row}",
-        [[entry_date.isoformat(), item, amount, category]],
+    worksheet.append_row(
+        [
+            str(uuid.uuid4()),
+            entry_date.isoformat(),
+            item,
+            int(amount),
+            category,
+        ],
         value_input_option="USER_ENTERED",
     )
 
@@ -230,6 +242,23 @@ def save_to_google_sheet(entry_date: date, item: str, amount: str, category: str
 
 
 #期間別集計用のデータ読み込み
+def delete_expense(expense_sheet: Any, record_id: str) -> bool:
+    """record_idが一致する支出行を1行削除する。"""
+    ids = expense_sheet.col_values(1)
+
+    try:
+        row_number = ids.index(record_id) + 1
+    except ValueError:
+        return False
+
+    # ヘッダー行を誤って削除しないための防御。
+    if row_number <= 1:
+        return False
+
+    expense_sheet.delete_rows(row_number)
+    return True
+
+
 def load_expenses(expense_sheet, start, end):
     """対象期間内のすべての支出を新しい順で返す。"""
     rows = expense_sheet.get_all_records()
@@ -237,9 +266,16 @@ def load_expenses(expense_sheet, start, end):
         return pd.DataFrame(columns=EXPENSE_HEADERS)
 
     frame = pd.DataFrame(rows)
-    for header in EXPENSE_HEADERS:
-        if header not in frame.columns:
-            frame[header] = ""
+    missing_headers = [
+        header
+        for header in EXPENSE_HEADERS
+        if header not in frame.columns
+    ]
+    if missing_headers:
+        raise GoogleSheetsConfigError(
+            "スプレッドシートに必要な列がありません: "
+            + ", ".join(missing_headers)
+        )
 
     frame["日付"] = pd.to_datetime(frame["日付"], errors="coerce")
     frame["金額"] = (
@@ -598,15 +634,6 @@ def render_period_report() -> None:
         st.session_state.period_offset = 0
 
     current_start, _ = period_for(date.today())
-
-    with report_tab:
-        expense_sheet = get_google_sheet()
-        categories = st.session_state.categories
-
-        if "period_offset" not in st.session_state:
-            st.session_state.period_offset = 0
-
-    current_start, _ = period_for(date.today())
     start, end = shift_period(
         current_start,
         st.session_state.period_offset,
@@ -639,7 +666,14 @@ def render_period_report() -> None:
             st.session_state.period_offset += 1
             st.rerun()
 
-    expenses = load_expenses(expense_sheet, start, end)
+    try:
+        expenses = load_expenses(expense_sheet, start, end)
+    except GoogleSheetsConfigError as exc:
+        st.error(str(exc))
+        return
+    except Exception as exc:
+        st.error(f"支出データの読み込み中にエラーが発生しました: {exc}")
+        return
     total = int(expenses["金額"].sum()) if not expenses.empty else 0
     days_used = (
         int(expenses["日付"].nunique()) if not expenses.empty else 0
@@ -672,7 +706,13 @@ def render_period_report() -> None:
         st.subheader("支出一覧")
 
         for _, row in expenses.iterrows():
-            record_id = str(row["内容"])
+            record_id = str(row["record_id"]).strip()
+
+            if not record_id:
+                st.warning(
+                    f"「{row['内容']}」にはrecord_idがないため削除できません。"
+                )
+                continue
 
             with st.container(key=f"expense-row-{record_id}"):
                 left, middle, right = st.columns([3, 2, 1])
@@ -736,13 +776,25 @@ def main() -> None:
         category = render_category_picker()
 
         if st.button("Googleスプレッドシートに記録", use_container_width=True, type="primary"):
-            if not item.strip():
-                st.error("購入品を入力してください。")
-            elif not amount.strip():
+            cleaned_item = item.strip()
+            cleaned_amount = amount.strip()
+
+            if not cleaned_item:
+                st.error("内容を入力してください。")
+            elif not cleaned_amount:
                 st.error("金額を入力してください。")
+            elif not cleaned_amount.isascii() or not cleaned_amount.isdigit():
+                st.error("金額は半角数字のみで入力してください。")
+            elif int(cleaned_amount) <= 0:
+                st.error("金額は1円以上で入力してください。")
             else:
                 try:
-                    save_to_google_sheet(entry_date, item.strip(), amount.strip(), category)
+                    save_to_google_sheet(
+                        entry_date,
+                        cleaned_item,
+                        cleaned_amount,
+                        category,
+                    )
                 except GoogleSheetsConfigError as exc:
                     st.error(str(exc))
                 except Exception as exc:
@@ -752,12 +804,14 @@ def main() -> None:
                     st.write(
                         {
                             "日付": entry_date.isoformat(),
-                            "内容": item.strip(),
-                            "金額": amount.strip(),
+                            "内容": cleaned_item,
+                            "金額": cleaned_amount,
                             "カテゴリー": category,
                         }
                     )
 
+    with report_tab:
+        render_period_report()
 
 
 if __name__ == "__main__":
