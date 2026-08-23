@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import calendar
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 import altair as alt
 import pandas as pd
 import streamlit as st
+import html
 
 
 CAT_FOOD = "\u98df\u8cbb"
@@ -581,56 +582,19 @@ def render_google_setup_hint() -> None:
 #    st.dataframe(display_records, use_container_width=True, hide_index=True)
 
 
-def main() -> None:
-    st.set_page_config(page_title="家計簿入力", page_icon="\U0001f4b4", layout="centered")
-    initialize_state()
+def render_period_report() -> None:
+    expense_sheet = get_google_sheet()
+    categories = st.session_state.categories
 
-    st.title("家計簿入力")
-    st.caption("日付、購入品、金額、カテゴリーだけをGoogleスプレッドシートに記録します。")
-    render_google_setup_hint()
-
-    entry_date = render_date_picker()
-
-    st.markdown("#### B. 購入品")
-    item = st.text_input("購入品", placeholder="例: 牛乳、ノート、電車代")
-
-    st.markdown("#### C. 金額")
-    amount = st.text_input("金額", placeholder="例: 1280")
-
-    category = render_category_picker()
-
-    if st.button("Googleスプレッドシートに記録", use_container_width=True, type="primary"):
-        if not item.strip():
-            st.error("購入品を入力してください。")
-        elif not amount.strip():
-            st.error("金額を入力してください。")
-        else:
-            try:
-                save_to_google_sheet(entry_date, item.strip(), amount.strip(), category)
-            except GoogleSheetsConfigError as exc:
-                st.error(str(exc))
-            except Exception as exc:
-                st.error(f"保存中にエラーが発生しました: {exc}")
-            else:
-                st.success("記録しました。")
-                st.write(
-                    {
-                        "日付": entry_date.isoformat(),
-                        "購入品": item.strip(),
-                        "金額": amount.strip(),
-                        "カテゴリー": category,
-                    }
-                )
-
-
-
-if __name__ == "__main__":
-    main()
-
-
-with report_tab:
     if "period_offset" not in st.session_state:
         st.session_state.period_offset = 0
+
+    with report_tab:
+        expense_sheet = get_google_sheet()
+        categories = st.session_state.categories
+
+        if "period_offset" not in st.session_state:
+            st.session_state.period_offset = 0
 
     current_start, _ = period_for(date.today())
     start, end = shift_period(
@@ -698,7 +662,7 @@ with report_tab:
         st.subheader("支出一覧")
 
         for _, row in expenses.iterrows():
-            record_id = str(row["record_id"])
+            record_id = str(row["内容"])
 
             with st.container(key=f"expense-row-{record_id}"):
                 left, middle, right = st.columns([3, 2, 1])
@@ -706,7 +670,7 @@ with report_tab:
 
                 with left:
                     st.markdown(
-                        f"**{html.escape(str(row['購入品']))}**  \n"
+                        f"**{html.escape(str(row['内容']))}**  \n"
                         f"<span class='category-chip'>"
                         f"{icon} "
                         f"{html.escape(str(row['カテゴリー']))}"
@@ -735,3 +699,59 @@ with report_tab:
                             st.warning(
                                 "対象の記録が見つかりませんでした。"
                             )
+
+#メイン画面
+def main() -> None:
+    st.set_page_config(page_title="家計簿入力", page_icon="\U0001f4b4", layout="centered")
+    initialize_state()
+
+    input_tab, report_tab = st.tabs(
+        ["家計簿入力", "期間レポート"]
+    )
+
+
+    with input_tab:
+        st.title("家計簿入力")
+        st.caption("日付、内容、金額、カテゴリーだけをGoogleスプレッドシートに記録します。")
+        render_google_setup_hint()
+
+        entry_date = render_date_picker()
+
+        st.markdown("#### B. 内容")
+        item = st.text_input("内容", placeholder="例: 牛乳、ノート、電車代")
+
+        st.markdown("#### C. 金額")
+        amount = st.text_input("金額", placeholder="例: 1280")
+
+        category = render_category_picker()
+
+        if st.button("Googleスプレッドシートに記録", use_container_width=True, type="primary"):
+            if not item.strip():
+                st.error("購入品を入力してください。")
+            elif not amount.strip():
+                st.error("金額を入力してください。")
+            else:
+                try:
+                    save_to_google_sheet(entry_date, item.strip(), amount.strip(), category)
+                except GoogleSheetsConfigError as exc:
+                    st.error(str(exc))
+                except Exception as exc:
+                    st.error(f"保存中にエラーが発生しました: {exc}")
+                else:
+                    st.success("記録しました。")
+                    st.write(
+                        {
+                            "日付": entry_date.isoformat(),
+                            "内容": item.strip(),
+                            "金額": amount.strip(),
+                            "カテゴリー": category,
+                        }
+                    )
+
+    with report_tab:
+        render_period_report()
+
+
+
+if __name__ == "__main__":
+    main()
