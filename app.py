@@ -595,7 +595,7 @@ def main() -> None:
     item = st.text_input("購入品", placeholder="例: 牛乳、ノート、電車代")
 
     st.markdown("#### C. 金額")
-    amount = st.text_input("金額",placeholder="例: 1280")
+    amount = st.text_input(placeholder="例: 1280")
 
     category = render_category_picker()
 
@@ -622,7 +622,6 @@ def main() -> None:
                     }
                 )
 
-    render_summary_section()
 
 
 if __name__ == "__main__":
