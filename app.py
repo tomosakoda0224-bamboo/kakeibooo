@@ -344,6 +344,135 @@ def render_date_picker(
 
 
 #カレンダー表示関数
+def render_app_styles() -> None:
+    st.markdown(
+        """
+        <style>
+        .calendar-shell {
+            margin: 0.5rem 0 1.25rem;
+            padding: 1rem;
+            border: 1px solid rgba(100, 116, 139, 0.22);
+            border-radius: 16px;
+            background: rgba(248, 250, 252, 0.55);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .cal-weekday {
+            padding: 0.3rem 0;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .cal-weekday.sunday {
+            color: #dc2626;
+        }
+
+        .cal-weekday.saturday {
+            color: #2563eb;
+        }
+
+        .cal-empty {
+            min-height: 82px;
+        }
+
+        .cal-cell {
+            min-width: 0;
+            min-height: 82px;
+            padding: 9px;
+            border: 1px solid rgba(100, 116, 139, 0.18);
+            border-radius: 10px;
+            color: #1f2937;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 8px;
+            box-sizing: border-box;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .cal-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+        }
+
+        .cal-cell.today {
+            border-color: #16a34a;
+            box-shadow: inset 0 0 0 2px #16a34a;
+        }
+
+        .cal-date {
+            color: #475569;
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .cal-cell.sunday .cal-date {
+            color: #dc2626;
+        }
+
+        .cal-cell.saturday .cal-date {
+            color: #2563eb;
+        }
+
+        .cal-amount {
+            overflow-wrap: anywhere;
+            font-size: 0.98rem;
+            font-weight: 800;
+            line-height: 1.15;
+            text-align: right;
+        }
+
+        .cal-no-expense {
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        @media (max-width: 700px) {
+            .calendar-shell {
+                margin-left: -0.4rem;
+                margin-right: -0.4rem;
+                padding: 0.55rem;
+                border-radius: 12px;
+            }
+
+            .calendar-grid {
+                gap: 4px;
+            }
+
+            .cal-empty,
+            .cal-cell {
+                min-height: 64px;
+            }
+
+            .cal-cell {
+                padding: 6px 4px;
+                border-radius: 7px;
+            }
+
+            .cal-date,
+            .cal-weekday {
+                font-size: 0.68rem;
+            }
+
+            .cal-amount {
+                font-size: 0.72rem;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_calendar(start, end, daily_amounts):
     days = []
     cursor = start
@@ -351,7 +480,22 @@ def render_calendar(start, end, daily_amounts):
         days.append(cursor)
         cursor += timedelta(days=1)
 
-    cells = []
+    weekday_names = ["月", "火", "水", "木", "金", "土", "日"]
+    weekday_cells = []
+    for index, weekday_name in enumerate(weekday_names):
+        weekday_class = ""
+        if index == 5:
+            weekday_class = " saturday"
+        elif index == 6:
+            weekday_class = " sunday"
+        weekday_cells.append(
+            f'<div class="cal-weekday{weekday_class}">{weekday_name}</div>'
+        )
+
+    cells = [
+        '<div class="cal-empty" aria-hidden="true"></div>'
+        for _ in range(start.weekday())
+    ]
 
     for day in days:
         day_key = day.isoformat()
@@ -364,16 +508,28 @@ def render_calendar(start, end, daily_amounts):
         else:
             background = "#f7f7f3"
         amount_html = (
-            f"<strong>¥{amount:,}</strong>" if amount else "<span>—</span>"
+            f'<span class="cal-amount">¥{amount:,}</span>'
+            if amount
+            else '<span class="cal-amount cal-no-expense">—</span>'
         )
         today_class = " today" if day == date.today() else ""
+        weekday_class = ""
+        if day.weekday() == 5:
+            weekday_class = " saturday"
+        elif day.weekday() == 6:
+            weekday_class = " sunday"
         cells.append(
-            f"""<div class="cal-cell{today_class}" style="background:{background}">
-            <small>{day.month}/{day.day}</small>{amount_html}</div>"""
+            f"""<div class="cal-cell{today_class}{weekday_class}"
+            style="background:{background}">
+            <span class="cal-date">{day.month}/{day.day}</span>
+            {amount_html}</div>"""
         )
 
     st.markdown(
-        '<div class="calendar-grid">' + "".join(cells) + "</div>",
+        '<div class="calendar-shell"><div class="calendar-grid">'
+        + "".join(weekday_cells)
+        + "".join(cells)
+        + "</div></div>",
         unsafe_allow_html=True,
     )
 
@@ -753,6 +909,7 @@ def render_period_report() -> None:
 #メイン画面
 def main() -> None:
     st.set_page_config(page_title="家計簿入力", page_icon="\U0001f4b4", layout="centered")
+    render_app_styles()
     initialize_state()
 
     input_tab, report_tab = st.tabs(
