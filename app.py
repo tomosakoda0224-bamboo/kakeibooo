@@ -583,11 +583,21 @@ def render_google_setup_hint() -> None:
 
 
 def render_period_report() -> None:
-    expense_sheet = get_google_sheet()
     categories = st.session_state.categories
 
+    try:
+        expense_sheet = get_google_sheet()
+    except GoogleSheetsConfigError as exc:
+        st.error(str(exc))
+        return
+    except Exception as exc:
+        st.error(f"データ取得中にエラーが発生しました: {exc}")
+        return
+    
     if "period_offset" not in st.session_state:
         st.session_state.period_offset = 0
+
+    current_start, _ = period_for(date.today())
 
     with report_tab:
         expense_sheet = get_google_sheet()
@@ -747,9 +757,6 @@ def main() -> None:
                             "カテゴリー": category,
                         }
                     )
-
-    with report_tab:
-        render_period_report()
 
 
 
