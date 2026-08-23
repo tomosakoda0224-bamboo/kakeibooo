@@ -351,7 +351,7 @@ def render_app_styles() -> None:
         <style>
         .app-title {
             margin: 0.55rem 0 0.35rem;
-            font-size: clamp(1.8rem, 6vw, 2.45rem);
+            font-size: clamp(1.45rem, 5vw, 1.9rem);
             line-height: 1.15;
         }
 
@@ -393,7 +393,28 @@ def render_app_styles() -> None:
 
         .st-key-report-metrics div[data-testid="stMetricValue"] {
             font-size: 1.55rem !important;
+            font-weight: 800 !important;
             line-height: 1.15;
+        }
+
+        .st-key-period-nav-prev button,
+        .st-key-period-nav-next button {
+            border-color: #2563eb !important;
+            background: #2563eb !important;
+            color: #ffffff !important;
+        }
+
+        .st-key-period-nav-prev button:hover,
+        .st-key-period-nav-next button:hover {
+            border-color: #1d4ed8 !important;
+            background: #1d4ed8 !important;
+            color: #ffffff !important;
+        }
+
+        .st-key-period-nav-prev button p,
+        .st-key-period-nav-next button p {
+            color: #ffffff !important;
+            font-weight: 700;
         }
 
         /* 支出一覧は1レコードを横1行で表示する */
@@ -452,6 +473,11 @@ def render_app_styles() -> None:
         [class*="st-key-expense-row-"] button {
             min-height: 2.15rem;
             padding: 0.25rem 0.55rem;
+        }
+
+        [class*="st-key-expense-row-"] button p {
+            font-size: 0.72rem !important;
+            line-height: 1;
         }
 
         .calendar-shell {
@@ -531,7 +557,7 @@ def render_app_styles() -> None:
 
         .cal-amount {
             overflow-wrap: anywhere;
-            font-size: 0.98rem;
+            font-size: 0.82rem;
             font-weight: 800;
             line-height: 1.15;
             text-align: right;
@@ -544,7 +570,7 @@ def render_app_styles() -> None:
 
         @media (max-width: 700px) {
             .app-title {
-                font-size: 1.85rem;
+                font-size: 1.4rem;
             }
 
             .st-key-period-report h2 {
@@ -602,6 +628,7 @@ def render_app_styles() -> None:
 
             .st-key-report-metrics div[data-testid="stMetricValue"] {
                 font-size: 1.05rem !important;
+                font-weight: 800 !important;
             }
 
             .expense-line {
@@ -624,7 +651,10 @@ def render_app_styles() -> None:
             [class*="st-key-expense-row-"] button {
                 min-height: 1.9rem;
                 padding: 0.15rem 0.35rem;
-                font-size: 0.75rem;
+            }
+
+            [class*="st-key-expense-row-"] button p {
+                font-size: 0.6rem !important;
             }
 
             .calendar-shell {
@@ -654,7 +684,7 @@ def render_app_styles() -> None:
             }
 
             .cal-amount {
-                font-size: 0.72rem;
+                font-size: 0.62rem;
             }
         }
         </style>
@@ -729,9 +759,9 @@ def render_category_picker() -> str:
     st.markdown("#### D. \u30ab\u30c6\u30b4\u30ea\u30fc")
     category_items = list(st.session_state.categories.items())
 
-    columns = st.columns(4)
+    columns = st.columns(2)
     for index, (category_name, icon) in enumerate(category_items):
-        with columns[index % 4]:
+        with columns[index % 2]:
             is_selected = st.session_state.selected_category == category_name
             if st.button(
                 f"{icon} {category_name}",
