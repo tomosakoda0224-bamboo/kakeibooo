@@ -306,39 +306,40 @@ def render_date_picker(
     years = list(range(min_year, max_year + 1))
     months = list(range(1, 13))
 
-    st.markdown(section_title)
-    year_col, month_col, day_col = st.columns(3)
+    with st.container(key=f"{key_prefix}-date-picker"):
+        st.markdown(section_title)
+        year_col, month_col, day_col = st.columns(3, gap="small")
 
-    with year_col:
-        selected_year = st.selectbox(
-            "年",
-            years,
-            index=years.index(target_date.year),
-            format_func=lambda value: f"{value}年",
-            key=f"{key_prefix}_year",
-        )
+        with year_col:
+            selected_year = st.selectbox(
+                "年",
+                years,
+                index=years.index(target_date.year),
+                format_func=lambda value: f"{value}年",
+                key=f"{key_prefix}_year",
+            )
 
-    with month_col:
-        selected_month = st.selectbox(
-            "月",
-            months,
-            index=target_date.month - 1,
-            format_func=lambda value: f"{value}月",
-            key=f"{key_prefix}_month",
-        )
+        with month_col:
+            selected_month = st.selectbox(
+                "月",
+                months,
+                index=target_date.month - 1,
+                format_func=lambda value: f"{value}月",
+                key=f"{key_prefix}_month",
+            )
 
-    last_day = calendar.monthrange(selected_year, selected_month)[1]
-    days = list(range(1, last_day + 1))
-    default_day = min(target_date.day, last_day)
+        last_day = calendar.monthrange(selected_year, selected_month)[1]
+        days = list(range(1, last_day + 1))
+        default_day = min(target_date.day, last_day)
 
-    with day_col:
-        selected_day = st.selectbox(
-            "日",
-            days,
-            index=days.index(default_day),
-            format_func=lambda value: f"{value}日",
-            key=f"{key_prefix}_day",
-        )
+        with day_col:
+            selected_day = st.selectbox(
+                "日",
+                days,
+                index=days.index(default_day),
+                format_func=lambda value: f"{value}日",
+                key=f"{key_prefix}_day",
+            )
 
     return date(selected_year, selected_month, selected_day)
 
@@ -348,6 +349,111 @@ def render_app_styles() -> None:
     st.markdown(
         """
         <style>
+        .app-title {
+            margin: 0.55rem 0 0.35rem;
+            font-size: clamp(1.8rem, 6vw, 2.45rem);
+            line-height: 1.15;
+        }
+
+        .st-key-period-report h2 {
+            font-size: 1.45rem;
+        }
+
+        .st-key-period-report h3 {
+            font-size: 1.2rem;
+        }
+
+        .st-key-period-report div[data-testid="stCaptionContainer"] p {
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        /* 期間レポートの3つの指標をコンパクトにする */
+        .st-key-report-metrics div[data-testid="stHorizontalBlock"] {
+            flex-wrap: nowrap;
+            gap: 0.65rem;
+        }
+
+        .st-key-report-metrics div[data-testid="stColumn"] {
+            min-width: 0;
+            flex: 1 1 0 !important;
+        }
+
+        .st-key-report-metrics div[data-testid="stMetric"] {
+            padding: 0.7rem 0.75rem;
+            border: 1px solid rgba(100, 116, 139, 0.18);
+            border-radius: 10px;
+            background: rgba(248, 250, 252, 0.55);
+        }
+
+        .st-key-report-metrics div[data-testid="stMetricLabel"] p {
+            font-size: 0.82rem !important;
+            line-height: 1.2;
+        }
+
+        .st-key-report-metrics div[data-testid="stMetricValue"] {
+            font-size: 1.55rem !important;
+            line-height: 1.15;
+        }
+
+        /* 支出一覧は1レコードを横1行で表示する */
+        [class*="st-key-expense-row-"] {
+            margin-bottom: 0.4rem;
+            padding: 0.45rem 0.55rem;
+            border-bottom: 1px solid rgba(100, 116, 139, 0.18);
+        }
+
+        [class*="st-key-expense-row-"] div[data-testid="stHorizontalBlock"] {
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        [class*="st-key-expense-row-"] div[data-testid="stColumn"] {
+            min-width: 0;
+        }
+
+        .expense-line {
+            min-width: 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) auto auto auto;
+            align-items: center;
+            gap: 0.55rem;
+            color: inherit;
+            font-size: 0.88rem;
+            line-height: 1.2;
+        }
+
+        .expense-item {
+            min-width: 0;
+            overflow: hidden;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .expense-category {
+            padding: 0.18rem 0.45rem;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.14);
+            white-space: nowrap;
+        }
+
+        .expense-amount {
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .expense-date {
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        [class*="st-key-expense-row-"] button {
+            min-height: 2.15rem;
+            padding: 0.25rem 0.55rem;
+        }
+
         .calendar-shell {
             margin: 0.5rem 0 1.25rem;
             padding: 1rem;
@@ -437,6 +543,90 @@ def render_app_styles() -> None:
         }
 
         @media (max-width: 700px) {
+            .app-title {
+                font-size: 1.85rem;
+            }
+
+            .st-key-period-report h2 {
+                font-size: 1.2rem;
+            }
+
+            .st-key-period-report h3 {
+                font-size: 1rem;
+            }
+
+            .st-key-period-report div[data-testid="stCaptionContainer"] p {
+                font-size: 0.72rem;
+            }
+
+            /* Streamlitがスマホで年月日を縦積みにする動作を上書き */
+            [class*="st-key-"][class*="-date-picker"] div[data-testid="stHorizontalBlock"] {
+                flex-wrap: nowrap;
+                gap: 0.35rem;
+            }
+
+            [class*="st-key-"][class*="-date-picker"] div[data-testid="stColumn"] {
+                min-width: 0;
+                flex: 1 1 0 !important;
+            }
+
+            [class*="st-key-"][class*="-date-picker"] label p {
+                font-size: 0.75rem;
+            }
+
+            [class*="st-key-"][class*="-date-picker"] div[data-baseweb="select"] > div {
+                min-height: 2.7rem;
+                padding-left: 0.35rem;
+                padding-right: 0.2rem;
+            }
+
+            [class*="st-key-"][class*="-date-picker"] div[data-baseweb="select"] span {
+                font-size: 0.78rem;
+            }
+
+            .st-key-report-metrics {
+                margin-bottom: 0.4rem;
+            }
+
+            .st-key-report-metrics div[data-testid="stHorizontalBlock"] {
+                gap: 0.35rem;
+            }
+
+            .st-key-report-metrics div[data-testid="stMetric"] {
+                padding: 0.5rem 0.4rem;
+            }
+
+            .st-key-report-metrics div[data-testid="stMetricLabel"] p {
+                font-size: 0.67rem !important;
+            }
+
+            .st-key-report-metrics div[data-testid="stMetricValue"] {
+                font-size: 1.05rem !important;
+            }
+
+            .expense-line {
+                grid-template-columns: minmax(0, 1.2fr) auto auto auto;
+                gap: 0.3rem;
+                font-size: 0.7rem;
+            }
+
+            .expense-category {
+                max-width: 5.4rem;
+                overflow: hidden;
+                padding: 0.14rem 0.3rem;
+                text-overflow: ellipsis;
+            }
+
+            [class*="st-key-expense-row-"] {
+                padding: 0.35rem 0.15rem;
+            }
+
+            [class*="st-key-expense-row-"] button {
+                min-height: 1.9rem;
+                padding: 0.15rem 0.35rem;
+                font-size: 0.75rem;
+            }
+
             .calendar-shell {
                 margin-left: -0.4rem;
                 margin-right: -0.4rem;
@@ -835,13 +1025,14 @@ def render_period_report() -> None:
         int(expenses["日付"].nunique()) if not expenses.empty else 0
     )
 
-    metric1, metric2, metric3 = st.columns(3)
-    metric1.metric("期間の合計金額", money(total))
-    metric2.metric("支出があった日", f"{days_used} 日")
-    metric3.metric(
-        "使用日の平均",
-        money(round(total / days_used) if days_used else 0),
-    )
+    with st.container(key="report-metrics"):
+        metric1, metric2, metric3 = st.columns(3, gap="small")
+        metric1.metric("期間の合計金額", money(total))
+        metric2.metric("支出があった日", f"{days_used} 日")
+        metric3.metric(
+            "使用日の平均",
+            money(round(total / days_used) if days_used else 0),
+        )
 
     st.subheader("日ごとの使用金額")
     st.caption(
@@ -871,26 +1062,23 @@ def render_period_report() -> None:
                 continue
 
             with st.container(key=f"expense-row-{record_id}"):
-                left, middle, right = st.columns([3, 2, 1])
+                details, delete_column = st.columns([11, 1], gap="small")
                 icon = categories.get(row["カテゴリー"], "🏷️")
 
-                with left:
+                with details:
                     st.markdown(
-                        f"**{html.escape(str(row['内容']))}**  \n"
-                        f"<span class='category-chip'>"
-                        f"{icon} "
-                        f"{html.escape(str(row['カテゴリー']))}"
-                        f"</span>",
+                        "<div class='expense-line'>"
+                        f"<span class='expense-item' title='{html.escape(str(row['内容']))}'>"
+                        f"{html.escape(str(row['内容']))}</span>"
+                        f"<span class='expense-category'>{icon} "
+                        f"{html.escape(str(row['カテゴリー']))}</span>"
+                        f"<span class='expense-amount'>{money(row['金額'])}</span>"
+                        f"<span class='expense-date'>{row['日付']}</span>"
+                        "</div>",
                         unsafe_allow_html=True,
                     )
 
-                with middle:
-                    st.markdown(
-                        f"**{money(row['金額'])}**  \n"
-                        f"{row['日付']}"
-                    )
-
-                with right:
+                with delete_column:
                     if st.button(
                         "🗑️",
                         key=f"delete_{record_id}",
@@ -918,7 +1106,10 @@ def main() -> None:
 
 
     with input_tab:
-        st.title("家計簿入力")
+        st.markdown(
+            "<h1 class='app-title'>家計簿入力</h1>",
+            unsafe_allow_html=True,
+        )
         st.caption("日付、内容、金額、カテゴリーだけをGoogleスプレッドシートに記録します。")
         render_google_setup_hint()
 
@@ -968,7 +1159,8 @@ def main() -> None:
                     )
 
     with report_tab:
-        render_period_report()
+        with st.container(key="period-report"):
+            render_period_report()
 
 
 if __name__ == "__main__":
