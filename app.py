@@ -349,6 +349,44 @@ def render_app_styles() -> None:
     st.markdown(
         """
         <style>
+
+        /* Keep each expense in three columns, including narrow mobile screens. */
+        [class*="st-key-expense-row-"] {
+            border-bottom: 1px solid rgba(100, 116, 139, .22);
+            padding: .5rem 0;
+        }
+        [class*="st-key-expense-row-"] [data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) 44px;
+            gap: 8px !important;
+            align-items: center;
+        }
+        [class*="st-key-expense-row-"] [data-testid="stHorizontalBlock"] > div {
+            width: 100% !important;
+            min-width: 0 !important;
+            flex: none !important;
+        }
+        [class*="st-key-expense-row-"] [data-testid="stHorizontalBlock"] > div:nth-child(2) {
+            text-align: right;
+        }
+        [class*="st-key-expense-row-"] p {
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+        [class*="st-key-expense-row-"] button {
+            min-width: 44px;
+            min-height: 44px;
+            padding: 4px;
+        }
+        @media (max-width: 700px) {
+            [class*="st-key-expense-row-"] p {
+                font-size: .8rem;
+                line-height: 1.4;
+            }
+            [class*="st-key-expense-row-"] .category-chip {
+                font-size: .75rem;
+            }
+        }
         @media (max-width: 700px) {
             .block-container {padding-top: 3.5rem; padding-left: .75rem; padding-right: .75rem;}
             .st-key-compact-entry, .st-key-compact-entry [data-testid="stVerticalBlock"] {
