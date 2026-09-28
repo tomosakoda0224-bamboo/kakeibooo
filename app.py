@@ -524,6 +524,100 @@ def render_app_styles() -> None:
                 letter-spacing: -0.04em;
             }
         }
+
+        /* Quiet green, warm paper, and a consistent type scale. */
+        [data-testid="stAppViewContainer"] {
+            background: #f3f5f1;
+            color: #233b33;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+        }
+        [data-testid="stHeader"] {background: #f3f5f1;}
+        .block-container {max-width: 920px; padding-top: 3.5rem; padding-bottom: 2rem;}
+        h1, h2, h3, h4 {color: #203e32; letter-spacing: -.025em;}
+        h1 {font-size: 1.8rem; font-weight: 750;}
+        h3 {font-size: 1.1rem; font-weight: 700;}
+        [data-testid="stCaptionContainer"] {color: #64766c; font-size: .8rem;}
+        [data-testid="stWidgetLabel"] p {color: #52665c; font-size: .82rem; font-weight: 600;}
+        [data-baseweb="tab-list"] {
+            background: #e7ece6; border-radius: 14px; padding: 4px; gap: 4px;
+        }
+        [data-baseweb="tab"] {
+            flex: 1; height: 42px; border-radius: 10px; color: #63746a;
+        }
+        [data-baseweb="tab"] p {font-size: .88rem; font-weight: 650;}
+        [data-baseweb="tab"][aria-selected="true"] {
+            background: #fff; color: #205c43; box-shadow: 0 2px 6px #213e3210;
+        }
+        [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] {display: none;}
+        .st-key-compact-entry {
+            background: #fff; border: 1px solid #e0e7df; border-radius: 20px;
+            padding: 22px; box-shadow: 0 8px 32px #28433306;
+        }
+        .st-key-compact-entry h1 {padding-top: 0; padding-bottom: .4rem;}
+        [data-baseweb="input"], [data-baseweb="select"] > div {
+            background: #f5f7f3; border-color: #dce4db; border-radius: 10px; color: #233b33;
+        }
+        [data-baseweb="input"] input {color: #233b33; background: transparent;}
+        [data-baseweb="input"] input::placeholder {color: #87958a;}
+        [data-baseweb="select"] svg {fill: #52665c;}
+        [data-baseweb="input"]:focus-within, [data-baseweb="select"]:focus-within > div {
+            border-color: #398463; box-shadow: 0 0 0 2px #39846320;
+        }
+        [data-testid="stButton"] button {
+            border-radius: 10px; border-color: #dce4db; background: #fff; color: #365846;
+        }
+        [data-testid="stButton"] button:hover {border-color: #398463; background: #edf5ee; color: #205c43;}
+        [data-testid="stButton"] button[kind="primary"] {
+            background: #256448; color: #fff; border-color: #256448;
+            box-shadow: 0 4px 10px #25644820;
+        }
+        [data-testid="stButton"] button[kind="primary"]:hover {background: #1d523a; color: #fff;}
+        [data-testid="stButton"] button[kind="primary"] p {color: #fff; font-weight: 650;}
+        [data-testid="stExpander"] details {
+            border: 1px solid #dfe6dc; border-radius: 12px; background: #f8faf6;
+        }
+        [data-testid="stExpander"] summary {color: #52665c;}
+        [data-testid="stMetric"] {
+            background: #fff; border: 1px solid #e0e7df; border-radius: 16px; padding: 16px;
+        }
+        [data-testid="stMetricLabel"] p {font-size: .78rem; color: #64766c;}
+        [data-testid="stMetricValue"] {
+            color: #205c43; font-size: 1.7rem; font-weight: 700;
+            font-variant-numeric: tabular-nums; letter-spacing: -.035em;
+        }
+        .calendar-shell {background: #fff; border-color: #e0e7df; box-shadow: none; border-radius: 18px;}
+        .cal-cell {border-radius: 10px; border-color: #294a3510;}
+        .cal-weekday {font-size: .72rem; letter-spacing: .04em;}
+        .cal-date {font-size: .72rem; font-weight: 600;}
+        .cal-amount {font-weight: 650; font-variant-numeric: tabular-nums;}
+        .cal-cell.today {border-color: #398463; box-shadow: inset 0 0 0 1px #398463;}
+        [class*="st-key-expense-row-"] {
+            background: #fff; border: 1px solid #e0e7df; border-radius: 14px; padding: 12px;
+        }
+        [class*="st-key-expense-row-"] p {color: #344c40; font-size: .88rem;}
+        [class*="st-key-expense-row-"] strong {font-weight: 650;}
+        [class*="st-key-expense-row-"] .category-chip {
+            display: inline-block; background: #edf3eb; color: #4e6a55;
+            border-radius: 6px; padding: 2px 6px; margin-top: 3px; font-size: .73rem;
+        }
+        [class*="st-key-expense-row-"] button {background: #f5f7f3; border-color: transparent;}
+        @media (max-width: 700px) {
+            .block-container {padding: 3.25rem .65rem 1.5rem;}
+            [data-baseweb="tab"] {height: 38px;}
+            [data-baseweb="tab"] p {font-size: .8rem;}
+            .st-key-compact-entry {padding: 12px; border-radius: 16px;}
+            .st-key-compact-entry h1 {font-size: 1.2rem; padding-bottom: .15rem;}
+            .st-key-compact-entry [data-testid="stWidgetLabel"] p {font-size: .76rem;}
+            [data-testid="stMetric"] {padding: 10px; border-radius: 12px;}
+            [data-testid="stMetricValue"] {font-size: 1.35rem;}
+            .calendar-shell {margin-left: 0; margin-right: 0; padding: .35rem; border-radius: 12px;}
+            .cal-cell {border-radius: 6px;}
+            .cal-date, .cal-weekday {font-size: .65rem;}
+            [class*="st-key-expense-row-"] {padding: 8px; border-radius: 10px;}
+            [class*="st-key-expense-row-"] p {font-size: .78rem;}
+            [class*="st-key-expense-row-"] .category-chip {font-size: .68rem;}
+        }
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -977,7 +1071,7 @@ def main() -> None:
 
     with input_tab:
         with st.container(key="compact-entry"):
-            st.title("家計簿入力")
+            st.title("支出を記録")
 
             entry_date = render_date_picker(section_title="")
 
@@ -1022,9 +1116,8 @@ def main() -> None:
                             }
                         )
 
-        with st.expander("カテゴリー管理・接続設定"):
-            render_category_management()
-            render_google_setup_hint()
+        render_category_management()
+        render_google_setup_hint()
 
     with report_tab:
         render_period_report()
