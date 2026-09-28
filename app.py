@@ -510,7 +510,7 @@ def render_app_styles() -> None:
             }
 
             .cal-cell {
-                padding: 6px 4px;
+                padding: 6px 2px;
                 border-radius: 7px;
             }
 
@@ -520,7 +520,8 @@ def render_app_styles() -> None:
             }
 
             .cal-amount {
-                font-size: 0.72rem;
+                font-size: clamp(0.45rem, 1.8vw, 0.62rem);
+                letter-spacing: -0.04em;
             }
         }
         </style>
